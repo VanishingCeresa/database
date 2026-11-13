@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Example | Vanishing locus of the Ceresa cycle</title>
+<link rel="stylesheet" href="assets/katex/katex.min.css">
+<link rel="stylesheet" href="assets/style.css">
+<script defer src="assets/katex/katex.min.js"></script>
+<script defer src="assets/katex/contrib/auto-render.min.js"></script>
+<script defer src="data/examples.js"></script>
+<script defer src="data/knowls.js"></script>
+<script defer src="assets/site.js"></script>
+<script defer src="assets/knowls.js"></script>
+</head>
+<body data-section="catalogue" data-defer-math="1">
+<header class="site"></header>
+<main>
+  <div id="example"><p class="muted">Loading…</p></div>
+</main>
+<footer></footer>
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+  const main = document.getElementById("example");
+  const id = new URLSearchParams(location.search).get("id");
+  let data;
+  try { data = await loadExamples(); }
+  catch (e) { main.innerHTML = `<p class="notice">${escapeHTML(e.message)}</p>`; return; }
+  const r = data.examples.find(x => x.id === id || labelOf(x) === id);
+  if (!r) { main.innerHTML = `<h1>No such example</h1><p>There is no example called <code>${escapeHTML(id)}</code>. <a href="index.html">Back to the catalogue</a></p>`; return; }
+
+  const strip = s => String(s ?? "").replace(/\{\{[\w-]+\|?([^}]*)\}\}/g, "$1");
+  document.title = `${labelOf(r)} | ${SITE.title}`;
+  const refs = (r.references || []).map(k => {
+    const ref = data.references[k] || { text: k };
+    const t = escapeHTML(ref.text);
+    return `<li><span class="muted">[${escapeHTML(k)}]</span> ${ref.url ? `<a href="${escapeAttr(ref.url)}">${t}</a>` : t}</li>`;
+  }).join("");
+  const row = (k, v) => v ? `<tr><th>${k}:</th><td>${v}</td></tr>` : "";
+  const sig = r.signature || [];
+  const label = labelOf(r);
+
+  main.innerHTML = `
+    <a class="back" href="index.html">← Catalogue</a>
+    <h1 class="wide">${escapeHTML(label)}${r.type === "family" ? ' <span class="tag">family</span>' : ""}</h1>
+    ${r.seed ? '<p class="notice">Not yet checked against the references by a maintainer.</p>' : ""}
+
+    <h2>Curve information</h2>
+    <table class="info">
+      ${row("Name", linkKnowls(r.name))}
+      ${row(r.type === "family" ? "Equation of the family" : "Equation", r.equation ? `$${r.equation}$` : linkKnowls(r.description))}
+      ${row("Genus", escapeHTML(r.genus))}
+      ${row("Field of definition", linkKnowls(r.field))}
+      ${row("$\\mathrm{Aut}(C)$", r.group || r.gap ? groupHTML(r) : '<span class="muted">not recorded</span>')}
+      ${row("Group identifier", r.gap ? `$[${r.gap[0]},${r.gap[1]}]$` : "")}
+      ${row("Signature", r.gap ? (sig.length ? `$[\\,0;\\ ${sig.join(",\\,")}\\,]$` : `$[\\,${escapeHTML(r.genus)};\\ -\\,]$`) : "")}
+    </table>
+
+    <h2>Ceresa cycle</h2>
+    <table class="info">
+      ${row("Torsion in", statusHTML(r.status) + (r.conjecture ? ` assuming the ${escapeHTML(r.conjecture)}` : ""))}
+      ${row("Decided by", decidedHTML(r, data.examples))}
+      ${r.locus ? row(`<span id="locus">Criterion in the ${escapeHTML(r.locus.group)}</span>`, `${linkKnowls(r.locus.statement)} ${escapeHTML(r.locus.source || "")}`) : ""}
+      ${row("Proof", r.proof ? linkKnowls(r.proof) : "")}
+      ${row("Methods", (r.methods || []).map(linkKnowls).join("; "))}
+      ${row("Proved by", r.credit ? escapeHTML(r.credit) + (r.year ? ` (${escapeHTML(r.year)})` : "") : "")}
+    </table>
+
+    <h2>Other data</h2>
+    <table class="info">
+      ${row("Hyperelliptic", r.nonhyp?.proved ? `no. ${linkKnowls(r.nonhyp.how || "")}` : '<span class="muted">not yet decided</span>')}
+      ${row("Computation", r.computation ? linkKnowls(r.computation) : "")}
+      ${row("Checked on this site", r.verified ? linkKnowls(r.verified) : "")}
+      ${row("Notes", r.notes ? linkKnowls(r.notes) : "")}
+      ${row("LMFDB", lmfdbURL(r) ? `<a href="${lmfdbURL(r)}">family ${escapeHTML(lmfdbURL(r).split("/").pop())}</a>` : "")}
+    </table>
+
+    <h2>References</h2>
+    <ul class="refs">${refs || '<li class="muted">None listed.</li>'}</ul>
+    <p class="small"><a href="${issueURL("correction.yml", "Correction: " + label)}">Suggest a correction to this page</a></p>`;
+  typeset(main);
+});
+</script>
+</body>
+</html>

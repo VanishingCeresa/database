@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LS and QZ vanishing criteria | Vanishing locus of the Ceresa cycle</title>
+<link rel="stylesheet" href="assets/katex/katex.min.css">
+<link rel="stylesheet" href="assets/style.css">
+<script defer src="assets/katex/katex.min.js"></script>
+<script defer src="assets/katex/contrib/auto-render.min.js"></script>
+<script defer src="data/examples.js"></script>
+<script defer src="data/knowls.js"></script>
+<script defer src="assets/site.js"></script>
+<script defer src="assets/knowls.js"></script>
+</head>
+<body data-section="criteria">
+<header class="site"></header>
+<main>
+  <h1 class="wide">LS and QZ vanishing criteria</h1>
+  <p class="lede">Throughout, $C$ is a smooth projective curve of genus $g \ge 2$ over an algebraically closed field, $J$ is its <a class="knowl" data-knowl="jacobian">Jacobian</a>,
+    and $\kappa(C)$ is its <a class="knowl" data-knowl="ceresa-cycle">Ceresa cycle</a>, taken with $\mathbb{Q}$-coefficients. Both criteria are stated in terms of the action of
+    <a class="knowl" data-knowl="automorphism-group">$\mathrm{Aut}(C)$</a> on cohomology.</p>
+
+  <h2 id="laga-shnidman">Laga–Shnidman</h2>
+  <div class="thm"><p><span class="thm-head">Criterion A (Laga–Shnidman).</span> <em>If $H^3(J)^{\mathrm{Aut}(C)} = 0$, then $\kappa(C)$ is torsion modulo <a class="knowl" data-knowl="rational-equivalence">rational equivalence</a>.</em> [LS24, Theorem A]</p></div>
+  <div class="thm"><p><span class="thm-head">Criterion B (Laga–Shnidman).</span> <em>Assume the <a class="knowl" data-knowl="hodge-conjecture">Hodge conjecture</a>. If $H^0(J, \Omega^3_J)^{\mathrm{Aut}(C)} = 0$, then $\kappa(C)$ is torsion modulo <a class="knowl" data-knowl="algebraic-equivalence">algebraic equivalence</a>.</em> [LS24, Theorem B]</p></div>
+  <p class="todo">Add details here.</p>
+
+  <h2 id="qiu-zhang">Qiu–Zhang</h2>
+  <div class="thm"><p><span class="thm-head">Criterion (Qiu–Zhang).</span> <em>If $\bigl(H^1(C)^{\otimes 3}\bigr)^{\mathrm{Aut}(C)} = 0$, then $\kappa(C) = 0$ in the <a class="knowl" data-knowl="chow-group">Chow group</a>.</em> [QZ24]</p></div>
+  <p class="todo">Add details here.</p>
+
+  <p>Before applying either criterion, <a href="non-hyperelliptic.html">check that the curve is not hyperelliptic</a>. To check the hypotheses in practice, see the <a href="implementation.html">implementation</a>.</p>
+</main>
+<footer></footer>
+</body>
+</html>

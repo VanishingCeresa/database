@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Testing non-hyperellipticity | Vanishing locus of the Ceresa cycle</title>
+<link rel="stylesheet" href="assets/katex/katex.min.css">
+<link rel="stylesheet" href="assets/style.css">
+<script defer src="assets/katex/katex.min.js"></script>
+<script defer src="assets/katex/contrib/auto-render.min.js"></script>
+<script defer src="data/examples.js"></script>
+<script defer src="data/knowls.js"></script>
+<script defer src="assets/site.js"></script>
+<script defer src="assets/knowls.js"></script>
+</head>
+<body data-section="criteria">
+<header class="site"></header>
+<main>
+  <h1 class="wide">Testing non-hyperellipticity</h1>
+  <p class="lede">The <a class="knowl" data-knowl="ceresa-cycle">Ceresa cycle</a> of a <a class="knowl" data-knowl="hyperelliptic">hyperelliptic</a> curve vanishes, so the catalogue records only curves proved to be non-hyperelliptic.
+    Throughout, $C$ is a curve of genus $g \ge 3$. Any one of the tests below is enough.</p>
+
+  <h2 id="magma">By computer</h2>
+  <p>In Magma, for a curve <code>C</code> given by equations:</p>
+<pre>IsHyperelliptic(C);               // over the base field of C
+IsGeometricallyHyperelliptic(C);  // over an algebraic closure
+Genus(C);</pre>
+  <p>The catalogue needs the second one to return <code>false</code>.</p>
+
+  <h2 id="tests">By hand</h2>
+  <ol class="steps">
+    <li><strong>Genus 3.</strong> A curve of genus $3$ is non-hyperelliptic exactly when it is isomorphic to a <a class="knowl" data-knowl="plane-quartic">smooth plane quartic</a>.</li>
+    <li><strong>Canonical map.</strong> $C$ is non-hyperelliptic exactly when the canonical map $C \to \mathbb{P}^{g-1}$ is an embedding.
+      For a hyperelliptic curve it has degree $2$ onto a rational normal curve.</li>
+    <li><strong>Quadrics through the canonical curve.</strong> By Max Noether's theorem, $C$ is non-hyperelliptic exactly when
+      $\mathrm{Sym}^2 H^0(C, K_C) \to H^0(C, 2K_C)$ is surjective. Equivalently, the canonical image lies on exactly
+      $\tfrac{(g-2)(g-3)}{2}$ independent quadrics; in the hyperelliptic case it lies on $\tfrac{(g-1)(g-2)}{2}$.</li>
+    <li><strong>Involutions.</strong> The hyperelliptic involution is central in <a class="knowl" data-knowl="automorphism-group">$\mathrm{Aut}(C)$</a>, has $2g+2$ fixed points, and its quotient has genus $0$.
+      So if no involution of $C$ has a quotient of genus $0$, then $C$ is non-hyperelliptic.</li>
+    <li><strong>Size of the automorphism group.</strong> If $|\mathrm{Aut}(C)| &gt; \max\{8(g+1),\, 120\}$, then $C$ is not hyperelliptic
+      [QZ24, Lemma 3.1.1]. In particular, <a class="knowl" data-knowl="hurwitz-curve">Hurwitz curves</a> are never hyperelliptic [QZ24, Cor. 3.1.2].</li>
+    <li><strong>Eigenvalues of an automorphism.</strong> On a hyperelliptic curve $y^2 = f(x)$, every automorphism acts on the forms
+      $x^i\,dx/y$, for $0 \le i \le g-1$, with eigenvalues $\lambda,\ \lambda\mu,\ \dots,\ \lambda\mu^{g-1}$. So if one automorphism of $C$ acts on
+      $H^0(C, \Omega^1)$ with eigenvalues that do not form a geometric progression, then $C$ is not hyperelliptic.
+      The <a href="implementation.html#python">Python script on the implementation page</a> runs this test.</li>
+  </ol>
+  <p class="todo">Add worked examples here.</p>
+</main>
+<footer></footer>
+</body>
+</html>

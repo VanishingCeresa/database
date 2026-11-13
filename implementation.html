@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Implementation | Vanishing locus of the Ceresa cycle</title>
+<link rel="stylesheet" href="assets/katex/katex.min.css">
+<link rel="stylesheet" href="assets/style.css">
+<script defer src="assets/katex/katex.min.js"></script>
+<script defer src="assets/katex/contrib/auto-render.min.js"></script>
+<script defer src="data/examples.js"></script>
+<script defer src="data/knowls.js"></script>
+<script defer src="assets/site.js"></script>
+<script defer src="assets/knowls.js"></script>
+</head>
+<body data-section="criteria">
+<header class="site"></header>
+<main>
+  <a class="back" href="criteria.html">← LS and QZ vanishing criteria</a>
+  <h1 class="wide">Implementation</h1>
+  <p class="lede">How to check in practice that $\bigl(\bigwedge^3 H^1(C)\bigr)^G = 0$, so that Laga–Shnidman's criterion (A) applies:
+    first the mathematics, then the code.</p>
+
+  <h2 id="setting">General considerations</h2>
+  <p>Let $C$ be a curve of genus $g$ and let $G = \mathrm{Aut}(C)$. Suppose there is a Galois branched cover
+    $\pi\colon C \to C/G = \mathbb{P}^1$ ramified at $0, 1, \infty$. By the Riemann–Hurwitz formula,
+    $$\frac{2g-2}{|G|} = -2 + \Bigl(1 - \frac{1}{e_0}\Bigr) + \Bigl(1 - \frac{1}{e_1}\Bigr) + \Bigl(1 - \frac{1}{e_\infty}\Bigr).$$</p>
+  <p>Let $V = H^0(C, \Omega^1_C)$, seen as a representation of $G$. For $\star \in \{0, 1, \infty\}$, let
+    $G_\star = \langle a_\star \rangle$ be the inertia group, of order $e_\star$, where $a_\star$ is chosen so that it acts on the
+    cotangent space of $C$ by multiplication by $\zeta_{e_\star} = e^{2 i \pi / e_\star}$. Write $\nu_\star$ for the primitive
+    character of $G_\star$ sending $a_\star$ to $\zeta_{e_\star}$.</p>
+
+  <h2 id="chevalley-weil">Step 1: the character of $V$</h2>
+  <p>For a character $\chi$ of $G$ and $1 \le j \le e_\star$, let $N_{\star, j}(\chi) = \langle \nu_\star^{\,j}, \chi \rangle_{G_\star}$.
+    The Chevalley–Weil formula states that</p>
+  <div class="thm"><p><span class="thm-head">Theorem (Chevalley–Weil).</span> $$\chi_V = \mathbf{1} - \chi_{\mathbb{C}[G]} + \sum_{\chi \in \mathrm{Irr}(G)} \Bigl[\, \sum_{\star \in \{0,1,\infty\}} \sum_{j=1}^{e_\star - 1}
+    \Bigl(1 - \frac{j}{e_\star}\Bigr) N_{\star, j}(\chi) \Bigr] \cdot \chi .$$</p></div>
+  <p>This Magma code computes it. Fill in the group and the generators $a_0$, $a_1$ at the bottom; it prints $\chi_V$ as a sum of rows
+    <code>CT[i]</code> of the character table. <a href="code/CharacterOfV.m" download>Download CharacterOfV.m</a></p>
+<pre class="listing">// Character of G on V = H^0(C, Omega^1), by the Chevalley-Weil formula,
+// for a Galois cover C -&gt; C/G = P^1 branched at 0, 1, infinity.
+//
+// inertia = [a_0, a_1, a_inf]: generators of the inertia groups, each chosen so
+// that it acts on the cotangent space of C by multiplication by exp(2 pi i / e).
+
+function CharacterOfV(G, inertia)
+    Irr := CharacterTable(G);
+    triv := Position(Irr, CharacterRing(G)!1);
+    n    := #Irr;
+
+    function Ninner(chi, g, e, j)
+        z := RootOfUnity(e);
+        s := &amp;+[ z^(-j*k) * chi(g^k) : k in [0..e-1] ];   // project onto zeta^j eigenspace
+        return Rationals()!(s / e);
+    end function;
+
+    mult := [ Integers() | ];
+    for i in [1..n] do
+        chi := Irr[i];
+        cc  := -(Rationals()!Degree(chi));   // -chi(C[G])
+        if i eq triv then cc +:= 1; end if;  // +1 (trivial)
+        for g in inertia do
+            e := Order(g);
+            for j in [1..e-1] do
+                cc +:= (1 - j/e) * Ninner(chi, g, e, j);
+            end for;
+        end for;
+        error if Denominator(cc) ne 1, &quot;not valid cover data&quot;;
+        Append(~mult, Integers()!cc);
+    end for;
+    return &amp;+[ mult[i] * Irr[i] : i in [1..n] ], mult;
+end function;
+
+procedure DisplayV(m)
+    s := &quot;&quot;;
+    for i in [1..#m] do
+        c := m[i];
+        if c eq 0 then continue; end if;
+        t := (Abs(c) eq 1) select Sprintf(&quot;CT[%o]&quot;, i)
+                 else Sprintf(&quot;%o*CT[%o]&quot;, Abs(c), i);
+        if s eq &quot;&quot; then
+            s := (c lt 0) select &quot;-&quot; cat t else t;
+        else
+            s := s cat ((c lt 0) select &quot; - &quot; else &quot; + &quot;) cat t;
+        end if;
+    end for;
+    printf &quot;chi(V) = %o\n&quot;, (s eq &quot;&quot;) select &quot;0&quot; else s;
+end procedure;
+
+G     := /* your group, e.g. SmallGroup(192, 194) */;
+a_0   := /* generator of G_0, e.g. G.1*G.4 */;
+a_1   := /* generator of G_1 */;
+a_inf := (a_0*a_1)^-1;
+CT    := CharacterTable(G);
+Order(a_0), Order(a_1), Order(a_inf);   // (e_0, e_1, e_inf)
+sub&lt;G | a_0, a_1, a_inf&gt; eq G;          // generation
+chiV, m := CharacterOfV(G, [a_0, a_1, a_inf]);
+DisplayV(m);                            // chi(V) as a sum of CT[i]
+</pre>
+
+  <h2 id="wedge">Step 2: invariants in $\bigwedge^3 H^1(C)$</h2>
+  <p>Let $W = H^1(C) = V \oplus V^\vee$. The goal is to find non-hyperelliptic examples where $\bigl(\bigwedge^3 W\bigr)^G = 0$. We use the formula
+    $$\chi_{\wedge^3 W}(g) = \frac{1}{6}\Bigl(\chi_W(g)^3 - 3\,\chi_W(g^2)\,\chi_W(g) + 2\,\chi_W(g^3)\Bigr).$$</p>
+  <p>To check, put the indices found in step 1 into <code>parts</code>. The code prints the multiplicity of the trivial representation in
+    $\bigwedge^3 W$; if it is $0$, the Ceresa cycle is torsion in the <a class="knowl" data-knowl="chow-group">Chow group</a>. <a href="code/Wedge3.m" download>Download Wedge3.m</a></p>
+<pre class="listing">// Multiplicity of the trivial representation in Wedge^3(W), where
+// W = H^1(C) = V + dual(V) and V = H^0(C, Omega^1).
+// If it is 0, Laga-Shnidman&#x27;s criterion (A) applies.
+
+// &lt;chi, 1&gt; = 1/|G| * sum_i |C_i| chi(g_i)
+function TrivMult(chi, G)
+    cc := Classes(G);
+    s  := &amp;+[ cc[i][2] * chi[i] : i in [1..#cc] ];
+    return s / #G;
+end function;
+
+function Wedge3(chi, pm)
+    return [ (chi[i]^3 - 3*chi[pm(i,2)]*chi[i] + 2*chi[pm(i,3)]) / 6
+             : i in [1..#chi] ];
+end function;
+
+// ---- input: any group, and the constituents of chi(V) found by CharacterOfV.m
+G     := /* your group, e.g. SmallGroup(192, 194) */;
+parts := /* sequence of indices, e.g. [5, 8, 17] */;
+
+CT := CharacterTable(G);
+pm := PowerMap(G);
+
+X  := &amp;+[ CT[i] : i in parts ];
+W  := X + ComplexConjugate(X);
+W3 := Wedge3(W, pm);
+
+mult := TrivMult(W3, G);
+printf &quot;Multiplicity of trivial rep in Wedge^3(W): %o\n&quot;, mult;
+</pre>
+
+  <h2 id="hyperelliptic-check">Step 3: check that the curve is not hyperelliptic</h2>
+  <p>The Ceresa cycle of a hyperelliptic curve vanishes for a trivial reason, so this must be ruled out. With an equation for $C$, in Magma:</p>
+<pre>IsHyperelliptic(C);               // over the base field of C
+IsGeometricallyHyperelliptic(C);  // over an algebraic closure</pre>
+  <p>Without an equation, the group is often enough:</p>
+  <div class="thm remark"><p><span class="thm-head">Remark.</span> If $|G| &gt; \max\{8(g+1),\, 120\}$, then $C$ is not hyperelliptic. [QZ24, Lemma 3.1.1]
+    More tests are on the page <a href="non-hyperelliptic.html">testing non-hyperellipticity</a>.</p></div>
+
+  <h2 id="examples">Worked examples</h2>
+  <ul>
+    <li><strong>Genus 7.</strong> The <a href="example.html?id=fricke-macbeath">Fricke–Macbeath curve</a> has $G = \mathrm{SL}_2(\mathbb{F}_8)$ and signature $(2,3,7)$.
+      Take $a_0 = G_1 G_2 G_1 G_2^{-1}$ and $a_1 = G_1 G_2 G_1^{-1}$; then $\chi_V = \chi_2$.</li>
+    <li><strong>Genus 9.</strong> The <a href="example.html?id=genus9-cyclic-quartic">curve 9.192-194.2-3-12</a> has $G = [192, 194]$ and signature $(2,3,12)$.
+      Take $a_0 = G_1 G_4$, $a_1 = G_2$ and $a_\infty = G_1 G_2^2 G_4$; then $\chi_V = \chi_5 + \chi_8 + \chi_{17}$.</li>
+  </ul>
+  <p>Here $G_i$ are Magma's generators of the group and $\chi_i$ is the $i$-th row of its character table.</p>
+
+  <h2 id="python">Without Magma</h2>
+  <p>The same check can be done without a character table. Describe the cover by a generating vector $(c_1, \dots, c_r)$:
+    elements that generate $G$, with $c_1 \cdots c_r = 1$, where $c_i$ generates the inertia group at a point above the $i$-th branch point
+    and has order $e_i$. For $x\ne1$ in $G$, the fixed points of $x$ above the $i$-th branch point are
+    the cosets $h\langle c_i\rangle$ with $h^{-1}xh = c_i^{\,k}$, and $x$ rotates the tangent space there by $\zeta_{e_i}^{\,k}$.
+    The holomorphic Lefschetz formula then gives
+    $$\chi_V(x) = 1 - \sum_{P\,\in\,\mathrm{Fix}(x)} \frac{1}{1-\overline{\lambda_P}}, \qquad \chi_W(x) = 2 - \#\mathrm{Fix}(x),$$
+    where $\lambda_P$ is the rotation of $x$ at $P$.</p>
+  <p>This Python script (no packages needed) takes a generating vector as permutations, with any number of branch points, and returns the genus,
+    $A = \dim\bigl(\bigwedge^3 W\bigr)^G$ for criterion (A), $B = \dim\bigl(\bigwedge^3 V\bigr)^G$ for criterion (B), and whether the
+    <a href="non-hyperelliptic.html">eigenvalue test</a> proves that the curve is not hyperelliptic.
+    <a href="code/ceresa_check.py" download>Download ceresa_check.py</a></p>
+<pre>C_9   (y^3 = x^4 + x), signature (3, 9, 9): genus 3, A = 0, B = 0, non-hyperelliptic proved
+C_15  (y^3 = x^5 + 1), signature (3, 5, 15): genus 4, A = 0, B = 0, non-hyperelliptic proved
+C_3   (Picard curves), signature (3, 3, 3, 3, 3): genus 3, A = 2, B = 0, non-hyperelliptic proved
+S_5   (Bring's curve), signature (2, 4, 5): genus 4, A = 0, B = 0, non-hyperelliptic proved
+D_12  (genus 6 family), signature (2, 2, 3, 4): genus 6, A = 4, B = 0, non-hyperelliptic proved</pre>
+<pre class="listing">&quot;&quot;&quot;
+Checks for the Laga-Shnidman criteria, for a curve C with a group action.
+
+Input : a generating vector (c_1, ..., c_r) of a finite group G: permutations
+        that generate G and satisfy c_1 * ... * c_r = 1.  They describe the
+        curves C with a G-action and C/G = P^1, branched at r points with
+        monodromy c_1, ..., c_r.
+Output: check(vector) returns
+          genus   the genus of C
+          A       dim (wedge^3 H^1(C))^G.        A = 0: criterion (A) applies, the Ceresa
+                                                 cycle is torsion in the Chow group
+          B       dim (wedge^3 H^0(C,Omega^1))^G. B = 0: criterion (B) applies, torsion in the
+                                                 Griffiths group, assuming the Hodge conjecture
+          nonhyp  True if the test below proves that C is not hyperelliptic
+
+Method.  Let V = H^0(C, Omega^1).  For x != 1 in G, the fixed points of x above the
+i-th branch point are the cosets h&lt;c_i&gt; with h^-1 x h = c_i^k, and x rotates the
+tangent space there by exp(2 pi i k / e_i).  The holomorphic Lefschetz formula gives
+    chi_V(x) = 1 - sum over fixed points of 1 / (1 - conj(rotation)),
+and chi_V(1) = g.  Then H^1(C) = V + conj(V), and for any character chi
+    dim (wedge^3)^G = 1/|G| * sum_x (chi(x)^3 - 3 chi(x) chi(x^2) + 2 chi(x^3)) / 6.
+
+Non-hyperellipticity.  If C is hyperelliptic, y^2 = f(x), every automorphism s acts on
+the forms x^i dx / y (i = 0..g-1) with eigenvalues lambda * mu^i: a geometric progression.
+So if some s in G has eigenvalues on V that do not form one, C is not hyperelliptic.
+
+Needs only Python 3.   Run:  python3 ceresa_check.py
+A permutation of {0, ..., n-1} is a tuple p, sending i to p[i].
+&quot;&quot;&quot;
+import cmath
+from fractions import Fraction
+from itertools import product
+
+
+# ---------------------------------------------------------------- permutations
+def mul(p, q):
+    &quot;&quot;&quot;The permutation &#x27;first p, then q&#x27;.&quot;&quot;&quot;
+    return tuple(q[i] for i in p)
+
+
+def inverse(p):
+    inv = [0] * len(p)
+    for i, j in enumerate(p):
+        inv[j] = i
+    return tuple(inv)
+
+
+def power(p, k):
+    result = tuple(range(len(p)))
+    for _ in range(k):
+        result = mul(result, p)
+    return result
+
+
+def order(p):
+    identity, q, k = tuple(range(len(p))), p, 1
+    while q != identity:
+        q, k = mul(q, p), k + 1
+    return k
+
+
+def cycles(n, *cycs):
+    &quot;&quot;&quot;cycles(5, (0, 1, 2), (3, 4)) is the permutation (0 1 2)(3 4) of {0,...,4}.&quot;&quot;&quot;
+    p = list(range(n))
+    for cyc in cycs:
+        for i, a in enumerate(cyc):
+            p[a] = cyc[(i + 1) % len(cyc)]
+    return tuple(p)
+
+
+def group(generators):
+    &quot;&quot;&quot;All elements of the group generated by the given permutations.&quot;&quot;&quot;
+    identity = tuple(range(len(generators[0])))
+    elements, frontier = {identity}, [identity]
+    while frontier:
+        new = []
+        for x in frontier:
+            for s in generators:
+                y = mul(x, s)
+                if y not in elements:
+                    elements.add(y)
+                    new.append(y)
+        frontier = new
+    return elements
+
+
+def conjugacy_classes(G):
+    &quot;&quot;&quot;Returns (class_of, representatives, sizes): class_of[x] is the index of the class of x.&quot;&quot;&quot;
+    class_of, reps, sizes = {}, [], []
+    inverses = {h: inverse(h) for h in G}
+    for x in sorted(G):
+        if x in class_of:
+            continue
+        cls = {mul(mul(inverses[h], x), h) for h in G}
+        for y in cls:
+            class_of[y] = len(reps)
+        reps.append(x)
+        sizes.append(len(cls))
+    return class_of, reps, sizes
+
+
+# ---------------------------------------------------------------- the checks
+def genus(G, vector):
+    &quot;&quot;&quot;Riemann-Hurwitz: 2g - 2 = |G| (r - 2 - sum 1/order(c_i)).&quot;&quot;&quot;
+    return 1 + len(G) * (len(vector) - 2 - sum(Fraction(1, order(c)) for c in vector)) / 2
+
+
+def characters(G, vector, classes=None):
+    &quot;&quot;&quot;Class functions (lists indexed by conjugacy class): chi_V (complex) and #Fix (exact).&quot;&quot;&quot;
+    class_of, reps, sizes = classes or conjugacy_classes(G)
+    inverses = {h: inverse(h) for h in G}
+    g = genus(G, vector)
+    powers = []                                   # for each c_i: {c_i^k: k}
+    for c in vector:
+        table, q = {}, tuple(range(len(c)))
+        for k in range(order(c)):
+            table[q] = k
+            q = mul(q, c)
+        powers.append(table)
+    chiV, fix = [], []
+    for x in reps:
+        if order(x) == 1:
+            chiV.append(complex(g)); fix.append(None)
+            continue
+        value, count = 1 + 0j, Fraction(0)
+        conjugates = [mul(mul(inverses[h], x), h) for h in G]
+        for table in powers:
+            e = len(table)
+            for y in conjugates:
+                k = table.get(y)
+                if k:                                              # y = c_i^k with k != 0
+                    count += Fraction(1, e)
+                    value -= (1 / (1 - cmath.exp(-2j * cmath.pi * k / e))) / e
+        chiV.append(value); fix.append(count)
+    return chiV, fix
+
+
+def wedge3_invariants(chi, G, class_of, reps, sizes):
+    total = 0
+    for i, x in enumerate(reps):
+        x2, x3 = class_of[mul(x, x)], class_of[power(x, 3)]
+        total += sizes[i] * (chi[i]**3 - 3 * chi[i] * chi[x2] + 2 * chi[x3]) / 6
+    return total / len(G)
+
+
+def is_geometric_progression(mult, n, g):
+    &quot;&quot;&quot;mult[j] = multiplicity of exp(2 pi i j / n).  Is the multiset {a + i*m mod n : i &lt; g}?&quot;&quot;&quot;
+    for a in range(n):
+        if not mult[a]:
+            continue
+        for m in range(n):
+            seen = [0] * n
+            for i in range(g):
+                seen[(a + i * m) % n] += 1
+            if seen == mult:
+                return True
+    return False
+
+
+def proves_nonhyperelliptic(G, chiV, class_of, reps, g):
+    for x in reps:
+        n = order(x)
+        if n == 1:
+            continue
+        values = [chiV[class_of[power(x, k)]] for k in range(n)]
+        mult = [round((sum(values[k] * cmath.exp(-2j * cmath.pi * j * k / n) for k in range(n)) / n).real)
+                for j in range(n)]
+        if not is_geometric_progression(mult, n, g):
+            return True
+    return False
+
+
+def check(vector):
+    G = group(list(vector))
+    identity = tuple(range(len(vector[0])))
+    product_ = identity
+    for c in vector:
+        product_ = mul(product_, c)
+    assert product_ == identity, &quot;the generating vector must have product 1&quot;
+    g = genus(G, vector)
+    assert g.denominator == 1 and g &gt;= 0, &quot;these orders do not give a curve&quot;
+    g = int(g)
+    classes = conjugacy_classes(G)
+    class_of, reps, sizes = classes
+    chiV, fix = characters(G, vector, classes)
+    chiW = [Fraction(2 * g) if f is None else 2 - f for f in fix]
+    A = wedge3_invariants(chiW, G, *classes)
+    B = wedge3_invariants(chiV, G, *classes)
+    assert A.denominator == 1 and abs(B - round(B.real)) &lt; 1e-6
+    return {&quot;order&quot;: len(G), &quot;signature&quot;: tuple(order(c) for c in vector), &quot;genus&quot;: g,
+            &quot;A&quot;: int(A), &quot;B&quot;: round(B.real),
+            &quot;nonhyp&quot;: g &gt;= 3 and proves_nonhyperelliptic(G, chiV, class_of, reps, g)}
+
+
+def generating_vectors(generators, orders):
+    &quot;&quot;&quot;Generating vectors with the given orders, one for each choice of conjugacy classes.&quot;&quot;&quot;
+    G = group(generators)
+    class_of, reps, sizes = conjugacy_classes(G)
+    by_order = {}
+    for x in G:
+        by_order.setdefault(order(x), []).append(x)
+    seen = set()
+    firsts = [x for x in reps if order(x) == orders[0]]
+    for a in firsts:
+        for middle in product(*[by_order.get(n, []) for n in orders[1:-1]]):
+            p = a
+            for b in middle:
+                p = mul(p, b)
+            last = inverse(p)
+            if order(last) != orders[-1]:
+                continue
+            vector = (a,) + middle + (last,)
+            key = tuple(sorted(class_of[c] for c in vector))
+            if key in seen or len(group(list(vector))) != len(G):
+                continue
+            seen.add(key)
+            yield vector
+
+
+def report(name, generators, orders):
+    &quot;&quot;&quot;Print one line for each different outcome among the refined passports.&quot;&quot;&quot;
+    seen = set()
+    for vector in generating_vectors(generators, orders):
+        r = check(vector)
+        line = (f&quot;{name}, signature {orders}: genus {r[&#x27;genus&#x27;]}, A = {r[&#x27;A&#x27;]}, B = {r[&#x27;B&#x27;]}, &quot;
+                f&quot;non-hyperelliptic {&#x27;proved&#x27; if r[&#x27;nonhyp&#x27;] else &#x27;not decided&#x27;}&quot;)
+        if line not in seen:
+            seen.add(line)
+            print(line)
+
+
+if __name__ == &quot;__main__&quot;:
+    C = lambda n: [cycles(n, tuple(range(n)))]
+    report(&quot;C_9   (y^3 = x^4 + x)&quot;, C(9), (3, 9, 9))
+    report(&quot;C_15  (y^3 = x^5 + 1)&quot;, C(15), (3, 5, 15))
+    report(&quot;C_3   (Picard curves)&quot;, C(3), (3, 3, 3, 3, 3))
+    report(&quot;S_5   (Bring&#x27;s curve)&quot;, [cycles(5, (0, 1)), cycles(5, (0, 1, 2, 3, 4))], (2, 4, 5))
+    report(&quot;D_12  (genus 6 family)&quot;, [cycles(12, tuple(range(12))), tuple((-i) % 12 for i in range(12))], (2, 2, 3, 4))
+</pre>
+
+  <h2 id="limits">Things to keep in mind</h2>
+  <ul>
+    <li>For a given group and signature, the answer can depend on the choice of the generators $a_0, a_1, a_\infty$, so check each choice.</li>
+    <li>A non-zero answer for a subgroup of $\mathrm{Aut}(C)$ proves nothing. Use the full automorphism group.</li>
+  </ul>
+</main>
+<footer></footer>
+</body>
+</html>

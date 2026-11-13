@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>References | Vanishing locus of the Ceresa cycle</title>
+<link rel="stylesheet" href="assets/katex/katex.min.css">
+<link rel="stylesheet" href="assets/style.css">
+<script defer src="assets/katex/katex.min.js"></script>
+<script defer src="assets/katex/contrib/auto-render.min.js"></script>
+<script defer src="data/examples.js"></script>
+<script defer src="data/knowls.js"></script>
+<script defer src="assets/site.js"></script>
+<script defer src="assets/knowls.js"></script>
+</head>
+<body data-section="about" data-defer-math="1">
+<header class="site"></header>
+<main>
+  <h1>References</h1>
+  <!-- Filled in from the "references" list in data/examples.js -->
+  <ul id="refs"><li class="muted">Loading…</li></ul>
+</main>
+<footer></footer>
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+  const ul = document.getElementById("refs");
+  try {
+    const data = await loadExamples();
+    ul.innerHTML = Object.entries(data.references).map(([k, r]) => {
+      const t = escapeHTML(r.text);
+      return `<li><span class="muted">[${escapeHTML(k)}]</span> ${r.url ? `<a href="${escapeAttr(r.url)}">${t}</a>` : t}</li>`;
+    }).join("");
+  } catch (e) { ul.innerHTML = `<li>${escapeHTML(e.message)}</li>`; }
+  typeset();
+});
+</script>
+</body>
+</html>
