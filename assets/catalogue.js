@@ -1,6 +1,6 @@
 // Builds the records (home page) and the catalogue list from data/examples.js.
 //
-//   <div id="records"></div>     number of examples, highest genus, counts by kind
+//   <div id="records"></div>     number of examples and highest genus
 //   <div id="catalogue"></div>   search, filters and the list
 //
 // A page shows a subset when its <body> has data-status="chow|griffiths|conditional"
@@ -15,25 +15,12 @@ const genusOf = r => Number(r.genus);
 const DASH = '<span class="muted" title="not recorded">–</span>';
 
 function renderRecords(el, all) {
-  const n = v => all.filter(r => r.status === v).length;
   const top = Math.max(...all.map(genusOf).filter(g => !isNaN(g)));
   const holder = all.find(r => genusOf(r) === top);
-  const byGenus = [...new Set(all.map(genusOf))].filter(g => !isNaN(g)).sort((a, b) => a - b);
-  // One line per record: [label, number, colour class, link]
-  const line = ([label, num, cls, href]) => {
-    const inner = `<span class="rl">${label}</span><span class="rn ${cls}">${num}</span>`;
-    return `<li>${href ? `<a href="${href}">${inner}</a>` : `<span>${inner}</span>`}</li>`;
-  };
-  const left = [
-    ["Examples", all.length, "", "index.html"],
-    ["Highest genus", top, "", `example.html?id=${encodeURIComponent(holder.id)}`],
-    ["Chow group", n("chow"), "chow", STATUS_PAGE.chow],
-    ["Griffiths group", n("griffiths"), "griffiths", STATUS_PAGE.griffiths],
-    ["Conditional", n("conditional"), "conditional", STATUS_PAGE.conditional],
-    ["With a criterion", all.filter(r => r.locus).length, "", "locus.html"],
-  ];
-  const right = byGenus.map(g => [`Genus ${g}`, all.filter(r => genusOf(r) === g).length, "", GENUS_PAGE[g] || ""]);
-  el.innerHTML = `<div class="recs"><ul>${left.map(line).join("")}</ul><ul>${right.map(line).join("")}</ul></div>`;
+  el.innerHTML = `<div class="recs">
+    <p>Examples recorded (${all.length})</p>
+    <p><a href="example.html?id=${encodeURIComponent(holder.id)}">Highest genus recorded (${top})</a></p>
+  </div>`;
 }
 
 // Signature written as in the LMFDB: [quotient genus; orders of the branch points].

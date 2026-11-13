@@ -300,3 +300,9 @@ table.info td .katex-display { margin: .5em 0; text-align: left; }
 table.info td .katex-display > .katex { text-align: left; }
 ul.refs { padding-left: 1.2rem; }
 #tbl th .katex { font-size: 1.25em; }
+
+/* ---------- Home: the two records, as plain lines ---------- */
+.recs { display: block; padding: 1.1rem 1.5rem; }
+.recs p { margin: .25rem 0; font-size: 1.05rem; white-space: nowrap; }
+.recs a { color: var(--ink); }
+.recs a:hover { color: var(--lavender); }
